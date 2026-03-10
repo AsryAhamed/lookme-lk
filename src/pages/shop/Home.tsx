@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Star, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { useFeaturedProducts, useNewArrivals, useCategories, useBanners } from '../../hooks/useApi'
 import ProductCard from '../../components/shop/ProductCard'
+import { supabase } from '../../lib/supabase'
 
 const GRADIENTS = [
   'from-[#8B1A4A] to-[#4A0E2A]',
@@ -11,15 +13,75 @@ const GRADIENTS = [
   'from-[#4A3A8B] to-[#1A0E4A]',
 ]
 
+function GalleryPreview() {
+  const { data: items } = useQuery({
+    queryKey: ['gallery', 'preview'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gallery')
+        .select('*')
+        .eq('is_active', true)
+        .order('sort_order')
+        .limit(8)
+      if (error) throw error
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return data as any[]
+    },
+  })
+
+  if (!items || items.length === 0) return null
+
+  return (
+    <section className="max-w-7xl mx-auto px-6 py-24">
+      <div className="flex items-end justify-between mb-12">
+        <div>
+          <span className="text-xs uppercase tracking-[0.3em] text-gold block mb-2">Our Lookbook</span>
+          <h2 className="font-cormorant text-4xl md:text-5xl font-light text-deep">Gallery</h2>
+        </div>
+        <Link
+          to="/gallery"
+          className="hidden md:flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted hover:text-deep transition-colors">
+          View All <ArrowRight size={13} />
+        </Link>
+      </div>
+
+      <div className="columns-2 md:columns-4 gap-3">
+        {items.map(item => (
+          <Link
+            key={item.id}
+            to="/gallery"
+            className="break-inside-avoid mb-3 group relative overflow-hidden block rounded-sm">
+            <img
+              src={item.image_url}
+              alt={item.title || ''}
+              className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
+          </Link>
+        ))}
+      </div>
+
+      {/* Mobile view all button */}
+      <div className="text-center mt-8 md:hidden">
+        <Link
+          to="/gallery"
+          className="inline-flex items-center gap-2 border border-deep text-deep text-xs uppercase tracking-widest px-6 py-3 hover:bg-deep hover:text-white transition-colors">
+          View Full Gallery <ArrowRight size={13} />
+        </Link>
+      </div>
+    </section>
+  )
+}
+
 export default function Home() {
-  const { data: featured }   = useFeaturedProducts()
+  const { data: featured }    = useFeaturedProducts()
   const { data: newArrivals } = useNewArrivals()
   const { data: categories }  = useCategories()
   const { data: banners }     = useBanners()
 
   const [bannerIdx, setBannerIdx] = useState(0)
 
-  // Auto-advance banner
   useEffect(() => {
     if (!banners || banners.length <= 1) return
     const timer = setInterval(() => {
@@ -28,15 +90,16 @@ export default function Home() {
     return () => clearInterval(timer)
   }, [banners])
 
-  const hasBanners = banners && banners.length > 0
+  const hasBanners   = banners && banners.length > 0
   const activeBanner = hasBanners ? banners[bannerIdx] : null
 
   return (
     <div>
-      {/* HERO — dynamic banners or static fallback */}
+
+      {/* ── HERO ── */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
 
-        {/* Banner background */}
+        {/* Background */}
         {hasBanners ? (
           <>
             {banners.map((banner, i) => (
@@ -62,7 +125,6 @@ export default function Home() {
         {/* Hero content */}
         <div className="relative max-w-7xl mx-auto px-6 w-full py-24">
           {hasBanners && activeBanner ? (
-            /* Dynamic banner content */
             <div className="max-w-2xl">
               <p className="text-xs uppercase tracking-[0.3em] text-white/60 mb-5 flex items-center gap-2">
                 <span className="w-10 h-px bg-white/40 inline-block" />
@@ -89,7 +151,6 @@ export default function Home() {
               </div>
             </div>
           ) : (
-            /* Static fallback content */
             <div className="grid md:grid-cols-2 gap-12 items-center">
               <div>
                 <p className="text-xs uppercase tracking-[0.3em] text-[#8B4513] mb-5 flex items-center gap-2">
@@ -136,7 +197,7 @@ export default function Home() {
           )}
         </div>
 
-        {/* Banner navigation dots + arrows — only when banners exist */}
+        {/* Slider controls */}
         {hasBanners && banners.length > 1 && (
           <>
             <button
@@ -158,7 +219,7 @@ export default function Home() {
           </>
         )}
 
-        {/* Marquee strip */}
+        {/* Marquee */}
         <div className="absolute bottom-0 left-0 right-0 bg-deep/80 backdrop-blur-sm py-2.5 overflow-hidden">
           <div className="flex whitespace-nowrap" style={{ animation: 'marquee 20s linear infinite' }}>
             {Array(3).fill(['Salwar Kameez ✦', 'Kurtis ✦', 'Lehengas ✦', 'Anarkali Suits ✦', 'Festive Wear ✦', 'Bridal ✦']).flat().map((t, i) => (
@@ -169,7 +230,7 @@ export default function Home() {
         <style>{`@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-33.33%) } }`}</style>
       </section>
 
-      {/* CATEGORIES */}
+      {/* ── CATEGORIES ── */}
       {categories && categories.length > 0 && (
         <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="text-center mb-14">
@@ -195,7 +256,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* NEW ARRIVALS */}
+      {/* ── NEW ARRIVALS ── */}
       {newArrivals && newArrivals.length > 0 && (
         <section className="bg-white py-24">
           <div className="max-w-7xl mx-auto px-6">
@@ -204,7 +265,8 @@ export default function Home() {
                 <span className="text-xs uppercase tracking-[0.3em] text-gold block mb-2">Just In</span>
                 <h2 className="font-cormorant text-4xl md:text-5xl font-light text-deep">New Arrivals</h2>
               </div>
-              <Link to="/shop?filter=new" className="hidden md:flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted hover:text-deep transition-colors">
+              <Link to="/shop?filter=new"
+                className="hidden md:flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted hover:text-deep transition-colors">
                 View All <ArrowRight size={13} />
               </Link>
             </div>
@@ -215,7 +277,7 @@ export default function Home() {
         </section>
       )}
 
-      {/* FEATURED */}
+      {/* ── FEATURED ── */}
       {featured && featured.length > 0 && (
         <section className="max-w-7xl mx-auto px-6 py-24">
           <div className="flex items-end justify-between mb-12">
@@ -223,7 +285,8 @@ export default function Home() {
               <span className="text-xs uppercase tracking-[0.3em] text-gold block mb-2">Handpicked</span>
               <h2 className="font-cormorant text-4xl md:text-5xl font-light text-deep">Featured Pieces</h2>
             </div>
-            <Link to="/shop" className="hidden md:flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted hover:text-deep transition-colors">
+            <Link to="/shop"
+              className="hidden md:flex items-center gap-1.5 text-xs uppercase tracking-widest text-muted hover:text-deep transition-colors">
               View All <ArrowRight size={13} />
             </Link>
           </div>
@@ -233,7 +296,10 @@ export default function Home() {
         </section>
       )}
 
-      {/* USP STRIP */}
+      {/* ── GALLERY PREVIEW ── */}
+      <GalleryPreview />
+
+      {/* ── USP STRIP ── */}
       <section className="bg-deep py-16">
         <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8">
           {[
@@ -253,7 +319,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* TESTIMONIALS */}
+      {/* ── TESTIMONIALS ── */}
       <section className="max-w-7xl mx-auto px-6 py-24">
         <div className="text-center mb-14">
           <span className="text-xs uppercase tracking-[0.3em] text-gold block mb-3">Customer Love</span>
@@ -275,6 +341,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+
     </div>
   )
 }

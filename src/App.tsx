@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { useEffect, useState } from 'react'
@@ -13,17 +13,28 @@ import Dashboard     from './pages/admin/Dashboard'
 import AdminProducts from './pages/admin/Products'
 import AdminOrders   from './pages/admin/Orders'
 import AdminCustomers from './pages/admin/Customers'
-import AdminBanners  from './pages/admin/Banners'
 import AdminCategories from './pages/admin/Categories'
+import AdminGallery  from './pages/admin/Gallery'
+import AdminBanners  from './pages/admin/Banners'
 
 import Home        from './pages/shop/Home'
 import Shop        from './pages/shop/Shop'
 import ProductPage from './pages/shop/Product'
 import Checkout    from './pages/shop/Checkout'
+import Gallery     from './pages/shop/Gallery'
 
 const qc = new QueryClient({
   defaultOptions: { queries: { staleTime: 1000 * 60 * 2 } },
 })
+
+// ── Scroll to top on every route change ──
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  }, [pathname])
+  return null
+}
 
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const isAdmin = useAuthStore(s => s.isAdmin)
@@ -42,7 +53,7 @@ export default function App() {
           .select('full_name')
           .eq('is_active', true)
           .single()
-        if (data) setAdmin(true, data.full_name)
+        if (data) setAdmin(true, data.full_name as string)
       }
       setAuthChecked(true)
     })
@@ -63,22 +74,25 @@ export default function App() {
   return (
     <QueryClientProvider client={qc}>
       <BrowserRouter>
+        <ScrollToTop />
         <Routes>
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminGuard><AdminLayout /></AdminGuard>}>
-            <Route index       element={<Dashboard />} />
-            <Route path="products" element={<AdminProducts />} />
-            <Route path="orders"   element={<AdminOrders />} />
-            <Route path="customers" element={<AdminCustomers />} />
-            <Route path="banners"   element={<AdminBanners />} />
+            <Route index             element={<Dashboard />} />
+            <Route path="products"   element={<AdminProducts />} />
+            <Route path="orders"     element={<AdminOrders />} />
+            <Route path="customers"  element={<AdminCustomers />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="gallery"    element={<AdminGallery />} />
+            <Route path="banners"    element={<AdminBanners />} />
           </Route>
 
           <Route path="/" element={<ShopLayout />}>
-            <Route index            element={<Home />} />
-            <Route path="shop"      element={<Shop />} />
-            <Route path="shop/:slug" element={<ProductPage />} />
-            <Route path="checkout"  element={<Checkout />} />
+            <Route index              element={<Home />} />
+            <Route path="shop"        element={<Shop />} />
+            <Route path="shop/:slug"  element={<ProductPage />} />
+            <Route path="checkout"    element={<Checkout />} />
+            <Route path="gallery"     element={<Gallery />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />

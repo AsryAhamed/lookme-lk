@@ -43,6 +43,7 @@ export default function ShopLayout() {
               { to: '/shop?cat=salwar-kameez', label: 'Salwar' },
               { to: '/shop?cat=kurtis',        label: 'Kurtis' },
               { to: '/shop?cat=lehengas',      label: 'Lehengas' },
+              { to: '/gallery',                label: 'Gallery' },
             ].map(({ to, label }) => (
               <li key={label}>
                 <NavLink to={to}
@@ -90,6 +91,7 @@ export default function ShopLayout() {
               { to: '/shop?cat=salwar-kameez', label: 'Salwar Kameez' },
               { to: '/shop?cat=kurtis',        label: 'Kurtis' },
               { to: '/shop?cat=lehengas',      label: 'Lehengas' },
+              { to: '/gallery',                label: 'Gallery' },
             ].map(({ to, label }) => (
               <NavLink key={label} to={to} onClick={() => setMenuOpen(false)}
                 className="block text-sm text-text hover:text-gold py-1 uppercase tracking-wider">
@@ -124,6 +126,7 @@ export default function ShopLayout() {
       {/* Footer */}
       <footer className="bg-deep text-white/50 mt-20">
         <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-4 gap-10">
+
           <div className="md:col-span-2">
             <span className="font-cormorant text-white text-2xl font-semibold block mb-3">
               look<span className="text-gold">me</span>.lk
@@ -140,9 +143,17 @@ export default function ShopLayout() {
           <div>
             <h4 className="text-white text-xs uppercase tracking-widest mb-4">Shop</h4>
             <ul className="space-y-2 text-sm">
-              {['Salwar Kameez', 'Kurtis', 'Lehengas', 'Anarkali Suits', 'Festive Wear', 'New Arrivals'].map(l => (
-                <li key={l}>
-                  <Link to="/shop" className="hover:text-gold transition-colors">{l}</Link>
+              {[
+                { to: '/shop',                   label: 'Shop All' },
+                { to: '/shop?cat=salwar-kameez', label: 'Salwar Kameez' },
+                { to: '/shop?cat=kurtis',        label: 'Kurtis' },
+                { to: '/shop?cat=lehengas',      label: 'Lehengas' },
+                { to: '/shop?cat=anarkali',      label: 'Anarkali Suits' },
+                { to: '/shop?filter=new',        label: 'New Arrivals' },
+                { to: '/gallery',                label: 'Gallery' },
+              ].map(({ to, label }) => (
+                <li key={label}>
+                  <Link to={to} className="hover:text-gold transition-colors">{label}</Link>
                 </li>
               ))}
             </ul>
@@ -161,10 +172,15 @@ export default function ShopLayout() {
               </li>
             </ul>
           </div>
+
         </div>
 
-        <div className="border-t border-white/10 py-4 text-center text-xs text-white/20">
-          © 2025 Lookme.lk — All rights reserved
+        {/* Footer bottom — admin link */}
+        <div className="border-t border-white/10 py-4 px-6 flex items-center justify-center gap-6 text-xs text-white/20">
+          <span>© 2025 Lookme.lk — All rights reserved</span>
+          <Link to="/admin" className="hover:text-white/40 transition-colors uppercase tracking-wider">
+            Admin
+          </Link>
         </div>
       </footer>
 
