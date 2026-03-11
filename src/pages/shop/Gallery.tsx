@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { X } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface GalleryItem {
   id: string
@@ -12,6 +12,18 @@ interface GalleryItem {
   sort_order: number
   created_at: string
 }
+
+const PAGE_SIZE = 8
+
+const CATEGORIES = [
+  { value: 'all',           label: 'All' },
+  { value: 'salwar-kameez', label: 'Salwar Kameez' },
+  { value: 'kurtis',        label: 'Kurtis' },
+  { value: 'lehengas',      label: 'Lehengas' },
+  { value: 'anarkali',      label: 'Anarkali' },
+  { value: 'festive',       label: 'Festive' },
+  { value: 'bridal',        label: 'Bridal' },
+]
 
 function useGallery(category: string) {
   return useQuery({
@@ -30,20 +42,26 @@ function useGallery(category: string) {
   })
 }
 
-const CATEGORIES = [
-  { value: 'all',            label: 'All' },
-  { value: 'salwar-kameez',  label: 'Salwar Kameez' },
-  { value: 'kurtis',         label: 'Kurtis' },
-  { value: 'lehengas',       label: 'Lehengas' },
-  { value: 'anarkali',       label: 'Anarkali' },
-  { value: 'festive',        label: 'Festive' },
-  { value: 'bridal',         label: 'Bridal' },
-]
-
-export default function Gallery() {
+export default function GalleryPage() {
   const [activeCategory, setActiveCategory] = useState('all')
-  const [lightbox, setLightbox] = useState<GalleryItem | null>(null)
+  const [lightbox, setLightbox]             = useState<GalleryItem | null>(null)
+  const [page, setPage]                     = useState(1)
+
   const { data: items, isLoading } = useGallery(activeCategory)
+
+  const totalPages = Math.ceil((items?.length || 0) / PAGE_SIZE)
+  const paginated  = items?.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE) || []
+
+  function changeCategory(cat: string) {
+    setActiveCategory(cat)
+    setPage(1)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  function changePage(p: number) {
+    setPage(p)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-12">
@@ -60,7 +78,7 @@ export default function Gallery() {
       {/* Category filters */}
       <div className="flex gap-2 flex-wrap justify-center mb-10">
         {CATEGORIES.map(cat => (
-          <button key={cat.value} onClick={() => setActiveCategory(cat.value)}
+          <button key={cat.value} onClick={() => changeCategory(cat.value)}
             className={`text-xs uppercase tracking-widest px-4 py-2 border transition-colors ${
               activeCategory === cat.value
                 ? 'bg-deep text-white border-deep'
@@ -73,15 +91,17 @@ export default function Gallery() {
 
       {/* Masonry grid */}
       {isLoading ? (
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-3 space-y-3">
-          {Array(12).fill(0).map((_, i) => (
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-3">
+          {Array(8).fill(0).map((_, i) => (
             <div key={i}
-              className={`animate-pulse bg-stone-100 rounded-sm w-full break-inside-avoid ${i % 3 === 0 ? 'aspect-[3/4]' : i % 3 === 1 ? 'aspect-square' : 'aspect-[4/5]'}`} />
+              className={`animate-pulse bg-stone-100 rounded-sm mb-3 break-inside-avoid ${
+                i % 3 === 0 ? 'aspect-[3/4]' : i % 3 === 1 ? 'aspect-square' : 'aspect-[4/5]'
+              }`} />
           ))}
         </div>
-      ) : items && items.length > 0 ? (
+      ) : paginated.length > 0 ? (
         <div className="columns-2 md:columns-3 lg:columns-4 gap-3">
-          {items.map((item) => (
+          {paginated.map(item => (
             <div key={item.id}
               className="break-inside-avoid mb-3 group relative overflow-hidden cursor-pointer rounded-sm"
               onClick={() => setLightbox(item)}>
@@ -91,7 +111,6 @@ export default function Gallery() {
                 className="w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
-              {/* Hover overlay */}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-end">
                 {(item.title || item.description) && (
                   <div className="p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300 w-full">
@@ -112,6 +131,43 @@ export default function Gallery() {
           <p className="font-cormorant text-3xl text-deep mb-3">No images yet</p>
           <p className="text-muted text-sm">Check back soon for our latest collection.</p>
         </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-12">
+          <button
+            onClick={() => changePage(page - 1)}
+            disabled={page === 1}
+            className="w-9 h-9 flex items-center justify-center border border-stone-200 text-muted hover:border-deep hover:text-deep transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+            <ChevronLeft size={16} />
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+            <button key={p} onClick={() => changePage(p)}
+              className={`w-9 h-9 text-sm border transition-colors ${
+                p === page
+                  ? 'bg-deep text-white border-deep'
+                  : 'border-stone-200 text-muted hover:border-deep hover:text-deep'
+              }`}>
+              {p}
+            </button>
+          ))}
+
+          <button
+            onClick={() => changePage(page + 1)}
+            disabled={page === totalPages}
+            className="w-9 h-9 flex items-center justify-center border border-stone-200 text-muted hover:border-deep hover:text-deep transition-colors disabled:opacity-30 disabled:cursor-not-allowed">
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Page info */}
+      {totalPages > 1 && (
+        <p className="text-center text-xs text-muted mt-3">
+          Page {page} of {totalPages} · {items?.length} images
+        </p>
       )}
 
       {/* Lightbox */}
@@ -145,6 +201,7 @@ export default function Gallery() {
           </div>
         </div>
       )}
+
     </div>
   )
 }
